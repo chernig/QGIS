@@ -29,3 +29,4 @@ def open(dialog, layer, feature):
     asset_type.currentTextChanged.connect(subAssetChange)
     # AllItems = [changemenu.itemText(i) for i in range(changemenu.count())]
     # lineEdit.setText(" ".join(str(x) for x in AllItems))
+    # Poshel gulyat asgasg
