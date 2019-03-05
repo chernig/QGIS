@@ -3,6 +3,8 @@ from PyQt5.QtGui import *
 def open(dialog, layer, feature):
     asset_type = dialog.findChild(QObject,"asst_type")
     asset_subtype = dialog.findChild(QObject,"sub-type")
+    asset_owner = dialog.findChild(QObject, "owner")
+    feature_code = dialog.findChild(QObject, "feat_code")
     dependencies = {
         'Communication' : ('coax','conduit','data','optic fibre', 'shielded twisted pair', 'unshielded twisted pair'),
         'Fire Service' : ('chemical','potable'),
@@ -23,10 +25,17 @@ def open(dialog, layer, feature):
         for i in range (0, len(dependencies[asset_type.currentText()])):
                 data = dependencies[asset_type.currentText()][i]
                 asset_subtype.addItem(dependencies[asset_type.currentText()][i], data)
+    def disable_field():
+        if feature_code.text() is not None:
+            asset_owner.setDisabled(True)
+        else:
+            asset_owner.setEnabled(True)
+    feature_code.textChanged.connect(disable_field)
     subAssetChange()
     value = asset_subtype.currentIndex()
     asset_subtype.setCurrentIndex(value)
     asset_type.currentTextChanged.connect(subAssetChange)
+
     # AllItems = [changemenu.itemText(i) for i in range(changemenu.count())]
     # lineEdit.setText(" ".join(str(x) for x in AllItems))
     # Poshel gulyat asgasg
