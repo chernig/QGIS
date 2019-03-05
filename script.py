@@ -26,10 +26,11 @@ def open(dialog, layer, feature):
                 data = dependencies[asset_type.currentText()][i]
                 asset_subtype.addItem(dependencies[asset_type.currentText()][i], data)
     def disable_field():
-        if feature_code.text() is not None:
-            asset_owner.setDisabled(True)
-        else:
+        text = feature_code.text()
+        if text == "NULL" or text is "":
             asset_owner.setEnabled(True)
+        else:
+            asset_owner.setDisabled(True)
     feature_code.textChanged.connect(disable_field)
     subAssetChange()
     value = asset_subtype.currentIndex()
