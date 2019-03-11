@@ -1,10 +1,10 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+project = QgsProject.instance()
 def open(dialog, layer, feature):
-    asset_type = dialog.findChild(QObject,"asst_type")
-    asset_subtype = dialog.findChild(QObject,"sub-type")
-    asset_owner = dialog.findChild(QObject, "owner")
-    feature_code = dialog.findChild(QObject, "feat_code")
+    def get_feature(featureName):
+        name = dialog.findChild(QObject, featureName)
+        return name
     dependencies = {
         'Communication' : ('coax','conduit','data','optic fibre', 'shielded twisted pair', 'unshielded twisted pair'),
         'Fire Service' : ('chemical','potable'),
@@ -21,22 +21,51 @@ def open(dialog, layer, feature):
         '':''
         }
     def subAssetChange():
-        asset_subtype.clear()
-        for i in range (0, len(dependencies[asset_type.currentText()])):
-                data = dependencies[asset_type.currentText()][i]
-                asset_subtype.addItem(dependencies[asset_type.currentText()][i], data)
-    def disable_field():
-        text = feature_code.text()
+        current_index=get_feature("sub-type").currentIndex()
+        get_feature("sub-type").clear()
+        for i in range (0, len(dependencies[get_feature("asst_type").currentText()])):
+                data = dependencies[get_feature("asst_type").currentText()][i]
+                get_feature("sub-type").addItem(dependencies[get_feature("asst_type").currentText()][i], data)
+        get_feature("sub-type").setCurrentIndex(current_index)
+        text = str(get_feature("sub-type").count())
+        get_feature("config").setText(text)
+    def disable_feature(feature1,feature_list):
+        text = get_feature(feature1).text()
         if text == "NULL" or text is "":
-            asset_owner.setEnabled(True)
+            for x in feature_list:
+                get_feature(x).setEnabled(True)
         else:
-            asset_owner.setDisabled(True)
-    feature_code.textChanged.connect(disable_field)
+            for x in feature_list:
+                get_feature(x).clear()
+                get_feature(x).setDisabled(True)
+    def enable_feature(feature1, feature2):
+        text = get_feature(feature1).text()
+        if text == "NULL" or text is "":
+            get_feature(feature2).clear()
+            get_feature(feature2).setDisabled(True)
+        else:
+            get_feature(feature2).setEnabled(True)
+    def concatenate():
+        value = get_feature("loc_abs").text()
+        value = value.split(",")
+        get_feature("loc_abs").setText(value)
+    def set_owner():
+        owner = get_feature("owner").text()
+        QgsExpressionContextUtils.setProjectVariable(project,'project_owner', owner)
+    get_feature("loc_abs").textChanged.connect(lambda: disable_feature("loc_abs",["loc_indic","loc_indic_desc","loc_intrpl","pos_rel_horz","pos_rel_virt"]))
+    test = QgsExpressionContextUtils.projectScope(project).variable("project_owner")
+    get_feature("owner").setText(test)
     subAssetChange()
-    value = asset_subtype.currentIndex()
-    asset_subtype.setCurrentIndex(value)
-    asset_type.currentTextChanged.connect(subAssetChange)
-
-    # AllItems = [changemenu.itemText(i) for i in range(changemenu.count())]
-    # lineEdit.setText(" ".join(str(x) for x in AllItems))
-    # Poshel gulyat asgasg
+    get_feature("asst_type").currentTextChanged.connect(subAssetChange)
+    get_feature("asst_size").textChanged.connect(lambda: enable_feature("asst_size","size_desc"))
+    get_feature("owner").editingFinished.connect(set_owner)
+    ######################################
+    # Absolute spatial position (concatenate): data should be stored like 1 variable? 2-3 variables? Tuple? Array? No user request
+    # Asset owner: Asset owner and project owner are the same variable or 2 different? Pop up?
+    # Material: Where is the data?
+    # GID: Autonumber? Enabled/disabled?
+    # QgsExpressionContextUtils.setProjectVariable(project,'myvar','Hello World!')
+    # QgsExpressionContextUtils.projectScope(project).variable('myvar')
+    # Tooltip (absolute spatial position)
+    #Tooltip = "Enter the X, Y and Z values as comma seperated elements, e.g. 545423.12,678678.43, 2.35
+    # #Applicattion run it check code"
