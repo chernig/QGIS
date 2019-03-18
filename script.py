@@ -68,4 +68,4 @@ def open(dialog, layer, feature):
     # QgsExpressionContextUtils.projectScope(project).variable('myvar')
     # Tooltip (absolute spatial position)
     #Tooltip = "Enter the X, Y and Z values as comma seperated elements, e.g. 545423.12,678678.43, 2.35
-    # #Applicattion run it check code"
+    # #Applicattion run it check code" bla blab a
