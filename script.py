@@ -21,14 +21,14 @@ def open(dialog, layer, feature):
         '':''
         }
     def subAssetChange():
-        current_index=get_feature("sub-type").currentIndex()
+        # current_index=get_feature("sub-type").currentIndex()
         get_feature("sub-type").clear()
         for i in range (0, len(dependencies[get_feature("asst_type").currentText()])):
                 data = dependencies[get_feature("asst_type").currentText()][i]
                 get_feature("sub-type").addItem(dependencies[get_feature("asst_type").currentText()][i], data)
-        get_feature("sub-type").setCurrentIndex(current_index)
-        text = str(get_feature("sub-type").count())
-        get_feature("config").setText(text)
+        # get_feature("sub-type").setCurrentIndex(current_index)
+        # text = str(get_feature("sub-type").count())
+        # get_feature("config").setText(text)
     def disable_feature(feature1,feature_list):
         text = get_feature(feature1).text()
         if text == "NULL" or text is "":
@@ -38,34 +38,52 @@ def open(dialog, layer, feature):
             for x in feature_list:
                 get_feature(x).clear()
                 get_feature(x).setDisabled(True)
-    def enable_feature(feature1, feature2):
+    def enable_feature(feature1, feature_list):
         text = get_feature(feature1).text()
         if text == "NULL" or text is "":
-            get_feature(feature2).clear()
-            get_feature(feature2).setDisabled(True)
+            for i in feature_list:
+                get_feature(i).clear()
+                get_feature(i).setDisabled(True)
         else:
-            get_feature(feature2).setEnabled(True)
-    def concatenate():
-        value = get_feature("loc_abs").text()
-        value = value.split(",")
-        get_feature("loc_abs").setText(value)
+            for i in feature_list:
+                get_feature(i).setEnabled(True)
+    # def concatenate():
+    #     value = get_feature("loc_abs").text()
+    #     value = value.split(",")
+    #     get_feature("loc_abs").setText(value)
     def set_owner():
         owner = get_feature("owner").text()
         QgsExpressionContextUtils.setProjectVariable(project,'project_owner', owner)
+    features_associated = {
+        "loc_abs" : ["loc_indic","loc_indic_desc","loc_intrpl","pos_rel_horz","pos_rel_virt"],
+        "loc_indic" : ["loc_abs","loc_intrpl","pos_rel_horz","pos_rel_virt"],
+        "pos_rel_virt" : ["loc_abs","loc_indic_desc","loc_indic"],
+        "pos_rel_horz" : ["loc_abs","loc_indic_desc","loc_indic"],
+        "loc_intrpl" : ["loc_abs","loc_indic_desc","loc_indic"]
+        }
+    def check_fields(feature_list):
+        for i in feature_list:
+            text = get_feature(i).text()
+            if text == "NULL" or text == "":
+                continue
+            else:
+                for x in features_associated[i]:
+                    get_feature(x).setDisabled(True)
+                return
+
     get_feature("loc_abs").textChanged.connect(lambda: disable_feature("loc_abs",["loc_indic","loc_indic_desc","loc_intrpl","pos_rel_horz","pos_rel_virt"]))
-    test = QgsExpressionContextUtils.projectScope(project).variable("project_owner")
-    get_feature("owner").setText(test)
+    get_feature("loc_indic").textChanged.connect(lambda: disable_feature("loc_indic",["loc_abs","loc_intrpl","pos_rel_horz","pos_rel_virt"]))
+    get_feature("pos_rel_virt").textChanged.connect(lambda: disable_feature("pos_rel_virt",["loc_abs","loc_indic_desc","loc_indic"]))
+    get_feature("pos_rel_horz").textChanged.connect(lambda: disable_feature("pos_rel_horz",["loc_abs","loc_indic_desc","loc_indic"]))
+    get_feature("loc_intrpl").textChanged.connect(lambda: disable_feature("loc_intrpl",["loc_abs","loc_indic_desc","loc_indic"]))
+    owner_name = QgsExpressionContextUtils.projectScope(project).variable("project_owner")
+    get_feature("owner").setText(owner_name)
     subAssetChange()
+    check_fields(["loc_abs","loc_indic","pos_rel_virt","pos_rel_horz","loc_intrpl"])
     get_feature("asst_type").currentTextChanged.connect(subAssetChange)
-    get_feature("asst_size").textChanged.connect(lambda: enable_feature("asst_size","size_desc"))
+    get_feature("asst_size").textChanged.connect(lambda: enable_feature("asst_size",["size_desc"]))
     get_feature("owner").editingFinished.connect(set_owner)
+    get_feature("")
     ######################################
-    # Absolute spatial position (concatenate): data should be stored like 1 variable? 2-3 variables? Tuple? Array? No user request
-    # Asset owner: Asset owner and project owner are the same variable or 2 different? Pop up?
-    # Material: Where is the data?
-    # GID: Autonumber? Enabled/disabled?
     # QgsExpressionContextUtils.setProjectVariable(project,'myvar','Hello World!')
     # QgsExpressionContextUtils.projectScope(project).variable('myvar')
-    # Tooltip (absolute spatial position)
-    #Tooltip = "Enter the X, Y and Z values as comma seperated elements, e.g. 545423.12,678678.43, 2.35
-    # #Applicattion run it check code" bla blab a
